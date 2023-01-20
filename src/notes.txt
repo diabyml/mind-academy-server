@@ -1,0 +1,111 @@
+CREATE TABLE IF NOT EXISTS users(
+	id SERIAL PRIMARY KEY,
+	username VARCHAR(255) UNIQUE NOT NULL,
+	email VARCHAR(255) UNIQUE NOT NULL,
+	mobile VARCHAR(255) NULL,
+	"firstName" VARCHAR(255) NULL DEFAULT NULL,
+	"lastName" VARCHAR(255) NULL DEFAULT NULL,
+	passwordHash VARCHAR(255) NOT NULL,
+	"createdAt" TIMESTAMP NOT NULL DEFAULT  CURRENT_TIMESTAMP,
+	"updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	"lastLogin" TIMESTAMP NULL DEFAULT NULL,
+	intro TEXT NULL DEFAULT NULL,
+  	profile TEXT NULL DEFAULT NULL,
+);
+
+
+CREATE TABLE IF NOT EXISTS categories(
+	id SERIAL PRIMARY KEY,
+	title VARCHAR(75) NOT NULL,
+	slug VARCHAR(100) NOT NULL,
+	content TEXT NULL DEFAULT NULL,
+);
+
+
+
+
+CREATE TABLE IF NOT EXISTS posts(
+	id SERIAL PRIMARY KEY,
+	"userId" INT NOT NULL,
+	title VARCHAR(255) NOT NULL,
+	content TEXT NULL DEFAULT NULL,
+	summary TEXT NULL,
+	slug VARCHAR(100) NOT NULL,
+	likes INT DEFAULT 0,
+	dislikes INT DEFAULT 0
+	published INT NOT NULL DEFAULT 0,
+	"createdAt" TIMESTAMP NOT NULL DEFAULT  CURRENT_TIMESTAMP,
+  	"updatedAt" TIMESTAMP NOT NULL DEFAULT  CURRENT_TIMESTAMP,
+	"publishedAt" TIMESTAMP NULL DEFAULT NULL,
+	CONSTRAINT fk_users FOREIGN KEY("userId") REFERENCES users(id)
+);
+
+# the primary is based on two coulumns
+# so we can not have duplicate categories in the same post
+
+
+
+CREATE TABLE IF NOT EXISTS post_categories (
+    "postId" INT NOT NULL,
+    "categoryId" INT NOT NULL,
+	CONSTRAINT pk PRIMARY KEY("postId","categoryId"),
+    CONSTRAINT fk_post_categories_posts FOREIGN KEY ("postId") REFERENCES posts(id) ON DELETE CASCADE,
+    CONSTRAINT fk_post_categories_categories FOREIGN KEY ("categoryId") REFERENCES categories(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS comments(
+	id SERIAL PRIMARY KEY,
+	"postId" INT NOT NULL,
+	"userId" INT NOT NULL,
+	content TEXT NULL DEFAULT NULL,
+	"createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	"updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	CONSTRAINT fk_posts FOREIGN KEY("postId") REFERENCES posts(id) ON DELETE CASCADE,
+	CONSTRAINT fk_users FOREIGN KEY("userId") REFERENCES users(id) ON DELETE CASCADE
+);
+
+
+
+CREATE TABLE IF NOT EXISTS reactions (
+    "postId" INT NOT NULL,
+    "userId" INT NOT NULL,
+	value INT NULL DEFAULT NULL,
+	CONSTRAINT pk_reactions PRIMARY KEY("postId","userId"),
+    CONSTRAINT fk_reactions_posts FOREIGN KEY ("postId") REFERENCES posts(id) ON DELETE CASCADE,
+    CONSTRAINT fk_reactions_users FOREIGN KEY ("userId") REFERENCES users(id) ON DELETE CASCADE
+);
+
+
+
+
+===================================================================
+add delete cascade to posts
+so when I delete a user all its associated posts will be deleted
+without this you can not delete a user that has posts.
+
+ALTER TABLE posts
+  DROP CONSTRAINT fk_users,
+  ADD CONSTRAINT fk_users_odc FOREIGN KEY ("userId")
+      REFERENCES users (id) ON DELETE CASCADE;
+
+
+
+# Alter posts table
+ALTER TABLE posts ADD COLUMN likes INT DEFAULT 0;
+ALTER TABLE posts ADD COLUMN dislikes INT DEFAULT 0;
+
+
+
+
+===============================================
+ENVIRONNMENT VARIABLES
+Ppackages:
+	npm i dotenv-safe
+
+	Database_url_structure: postgresql://username:password@host:port/database-name
+	port example: 5432
+
+	Redis url default: 127.0.0.1:6379
+
+	generate env variables types run: "gen-env": "gen-env-types .env -o src/env.d.ts -e ." with npx command
+	command that worked for me:  npx gen-env-types .env -o src/env.d.ts -e .

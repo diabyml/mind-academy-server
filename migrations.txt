@@ -1,0 +1,9 @@
+
+generate
+npx typeorm -d ./dist/src/data-source.js migration:generate ./src/migration/postWithCommentsCount
+
+run:
+npx typeorm -d ./dist/src/data-source.js migration:run
+
+create manually
+npx typeorm migration:create ./src/migration/fakePosts
